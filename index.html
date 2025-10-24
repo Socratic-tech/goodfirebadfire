@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Fire vs. Bad Fire</title>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Load Lucide icons --><script src="https://unpkg.com/lucide-icons"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the visualizer slider */
+        .slider-visualizer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .slider-visualizer img {
+            width: 100%;
+            display: block;
+            pointer-events: none;
+        }
+        .slider-visualizer .after-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+        }
+        .slider-visualizer .slider-handle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background-color: #fff;
+            cursor: ew-resize;
+            z-index: 10;
+        }
+        .slider-visualizer .slider-handle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            border: 3px solid #1e40af;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            /* Simple arrows */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%231e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline><polyline points="9 18 15 12 9 6"></polyline></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .slider-visualizer input[type="range"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            opacity: 0;
+            cursor: ew-resize;
+            z-index: 20;
+        }
+
+        /* Print styles for certificate */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #certificate-section, #certificate-section * {
+                visibility: visible;
+            }
+            #certificate-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #certificate-wrapper {
+                border: 10px solid #1e40af;
+                padding: 2rem;
+                width: 90%;
+                margin: auto;
+            }
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+        }
+        
+        /* Custom class for sortable cards */
+        .sort-card {
+            transition: all 0.3s ease;
+        }
+        
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 min-h-screen">
+
+    <!-- Main Application Container --><div id="app" class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <!-- Header --><header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-900 mb-4">Good Fire vs. Bad Fire 🔥</h1>
+            <p class="text-lg text-gray-700 mb-6">An interactive lesson on prairie burns</p>
+            
+            <!-- Grade Band Toggle --><div class="flex justify-center items-center bg-white p-2 rounded-full shadow-md max-w-xs mx-auto">
+                <button id="toggle-k2" 
+                        class="w-1/2 py-2 px-4 rounded-full text-sm md:text-base font-semibold transition-all">
+                    Grades K-2
+                </button>
+                <button id="toggle-35" 
+                        class="w-1/2 py-2 px-4 rounded-full text-sm md:text-base font-semibold transition-all">
+                    Grades 3-5
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content: Steps will be shown/hidden here --><main id="lesson-content" class="bg-white p-6 md:p-8 rounded-2xl shadow-xl min-h-[500px]">
+            
+            <!-- Step 1: Warm-Up --><section id="step-1" class="lesson-step">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 1: Warm-Up</h2>
+                <div class="text-lg space-y-4">
+                    <p class="font-semibold text-gray-700">Teacher's Prompt:</p>
+                    <div id="warmup-k2" class="grade-content p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg" data-grade="k-2">
+                        <p>"Look at a picture of a prairie. What do you see? Now, imagine a fire on the prairie. Do you think fire can be good? How could fire *help* a prairie?"</p>
+                        <p class="mt-2 text-sm text-gray-600">(Encourage students to share ideas about clearing old plants or helping seeds.)</p>
+                    </div>
+                    <div id="warmup-3-5" class="grade-content p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg" data-grade="3-5">
+                        <p>"Today we're talking about 'prescribed burns,' which is a fancy way of
+                        saying a planned, 'Good Fire.' To have *any* fire, you need three things. Can anyone remember the 'Fire Triangle'?"</p>
+                        <ul class="list-disc list-inside mt-2 ml-4">
+                            <li><strong>Fuel</strong> (like dry grass)</li>
+                            <li><strong>Oxygen</strong> (in the air)</li>
+                            <li><strong>Heat</strong> (like a spark or match)</li>
+                        </ul>
+                        <p class="mt-2 text-sm text-gray-600">(Discuss how removing one 'side' of the triangle stops a fire.)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Prairie Visualizer --><section id="step-2" class="lesson-step" style="display: none;">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 2: Prairie Visualizer</h2>
+                
+                <!-- K-2 Content --><div id="visualizer-k2" class="grade-content space-y-4" data-grade="k-2">
+                    <p class="text-lg">Let's see what a prairie looks like before, during, and after a "Good Fire"!</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">1. Before the Burn</h3>
+                            <img id="k2-before-img" src="https://placehold.co/400x300/A0A0A0/FFFFFF?text=Overgrown+Prairie" alt="Overgrown prairie with old, brown grass" class="rounded-lg shadow-md w-full">
+                            <p class="mt-2 text-sm text-gray-600">Lots of old, dry, brown plants.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">2. During the Burn</h3>
+                            <img id="k2-during-img" src="https://placehold.co/400x300/FF6347/FFFFFF?text=Controlled+Fire" alt="Controlled, low-burning fire on the prairie" class="rounded-lg shadow-md w-full">
+                            <p class="mt-2 text-sm text-gray-600">The fire burns away the old plants safely.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">3. After the Burn</h3>
+                            <img id="k2-after-img" src="https://placehold.co/400x300/32CD32/FFFFFF?text=New+Green+Plants" alt="New green plants growing after the fire" class="rounded-lg shadow-md w-full">
+                            <p class="mt-2 text-sm text-gray-600">New, green plants have space to grow!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-5 Content --><div id="visualizer-3-5" class="grade-content space-y-4" data-grade="3-5">
+                    <p class="text-lg">Drag the slider to see the change from *before* the burn to *after*!</p>
+                    <div class="slider-visualizer mx-auto">
+                        <img id="v35-before-img" src="https://placehold.co/600x400/A0A0A0/FFFFFF?text=Before:+Overgrown" alt="Overgrown prairie before a burn" class="before-image">
+                        <img id="v35-after-img" src="https://placehold.co/600x400/32CD32/FFFFFF?text=After:+New+Growth" alt="New green growth after a burn" class="after-image">
+                        <div class="slider-handle"></div>
+                        <input type="range" min="0" max="100" value="50" class="slider-input" id="v35-slider-input" aria-label="Slide to compare before and after images">
+                    </div>
+                </div>
+                
+                <!-- Image Upload Section --><div class="mt-8 p-4 bg-gray-100 rounded-lg">
+                    <h4 class="text-lg font-semibold mb-2">Teacher: Upload Your Own Images</h4>
+                    <p class="text-sm text-gray-600 mb-4">Upload your own "Before" and "After" photos from a local prairie!</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <label for="before-upload" class="block text-sm font-medium text-gray-700 mb-1">Before Image:</label>
+                            <input type="file" id="before-upload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                        </div>
+                        <div class="flex-1">
+                            <label for="after-upload" class="block text-sm font-medium text-gray-700 mb-1">After Image:</label>
+                            <input type="file" id="after-upload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: Sorting Game --><section id="step-3" class="lesson-step" style="display: none;">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 3: Sorting Game</h2>
+                <p class="text-lg mb-4">Is it a "Good Fire" ✅ or a "Bad Fire" ⛔? Let's sort them!</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Good Fire Column --><div>
+                        <h3 class="text-2xl font-bold text-center text-green-700 bg-green-100 p-3 rounded-lg mb-4">Good Fire ✅</h3>
+                        <div id="good-fire-bin" class="min-h-[200px] bg-green-50 p-4 rounded-lg border-2 border-dashed border-green-300 space-y-2">
+                            <!-- Cards will be moved here --></div>
+                    </div>
+                    
+                    <!-- Bad Fire Column --><div>
+                        <h3 class="text-2xl font-bold text-center text-red-700 bg-red-100 p-3 rounded-lg mb-4">Bad Fire ⛔</h3>
+                        <div id="bad-fire-bin" class="min-h-[200px] bg-red-50 p-4 rounded-lg border-2 border-dashed border-red-300 space-y-2">
+                            <!-- Cards will be moved here --></div>
+                    </div>
+                </div>
+                
+                <!-- Unsorted Cards --><div class="mt-8">
+                    <h3 class="text-2xl font-semibold text-center mb-4">Scenarios to Sort:</h3>
+                    <div id="sorting-deck" class="flex flex-wrap justify-center gap-4">
+                        <!-- Cards will be generated by JS --></div>
+                </div>
+            </section>
+
+            <!-- Step 4: Quick Quiz --><section id="step-4" class="lesson-step" style="display: none;">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 4: Quick Quiz</h2>
+                
+                <div id="quiz-container" class="max-w-xl mx-auto">
+                    <!-- Quiz questions will be injected here --></div>
+                
+                <div id="quiz-result" class="text-center mt-8" style="display: none;">
+                    <h3 class="text-3xl font-bold text-blue-800">Quiz Complete!</h3>
+                    <p class="text-2xl mt-4">You got <span id="quiz-score" class="font-bold"></span> out of <span id="quiz-total" class="font-bold"></span> correct!</p>
+                    <button id="restart-quiz-btn" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full text-lg transition-all">
+                        Try Again
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 5: Safety Rules --><section id="step-5" class="lesson-step">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 5: Safety Rules</h2>
+                
+                <!-- K-2 Content --><div id="safety-k2" class="grade-content space-y-6" data-grade="k-2">
+                    <div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Fire Safety Video</h3>
+                        <p class="text-lg mb-4">Watch this video with Sparky the Fire Dog to learn all about fire safety!</p>
+                        <div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg border-4 border-white">
+                            <iframe 
+                                class="w-full h-full" 
+                                src="https://www.youtube.com/embed/gHrPLeKzLg4" 
+                                title="Sparky Says Join My Fire Safety Club Video" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-5 Content --><div id="safety-3-5" class="grade-content space-y-6" data-grade="3-5">
+                    <div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">The Burn Crew & Conditions</h3>
+                        <ul class="list-disc list-inside space-y-1 text-lg">
+                            <li><strong>Burn Boss:</strong> The person in charge of the whole plan.</li>
+                            <li><strong>Ignition Crew:</strong> Safely starts the fire with "drip torches."</li>
+                            <li><strong>Holding Crew:</strong> Watches the edges ("firebreaks") to keep the fire inside the plan.</li>
+                            <li><strong>Weather:</strong> They *only* burn when conditions are safe (not too windy, not too dry).</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold text-blue-800 mb-2">What are "Firebreaks"?</h3>
+                        <p class="text-lg">Firebreaks are areas with no fuel. The crew makes them *before* the fire to stop it from spreading. They can be:</p>
+                        <ul class="list-disc list-inside ml-4 text-lg">
+                            <li>Mowed paths</li>
+                            <li>Roads or trails</li>
+                            <li>Areas that are already wet</li>
+                        </ul>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-green-100 rounded-lg border border-green-300">
+                            <h4 class="text-xl font-bold text-green-800 mb-2">DO ✅</h4>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Stay in your designated safe zone.</li>
+                                <li>Observe how the wind affects the smoke.</li>
+                                <li>Notice how the fire stops at the firebreak.</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-red-100 rounded-lg border border-red-300">
+                            <h4 class="text-xl font-bold text-red-800 mb-2">DON'T ⛔</h4>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Cross a firebreak for any reason.</li>
+                                <li>Distract the burn crew while they work.</li>
+                                <li>Ever try to start a fire, even a "good" one.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 6: Safe-to-Burn Simulator --><section id="step-6" class="lesson-step" style="display: none;">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Step 6: Safe-to-Burn Simulator</h2>
+                <p class="text-lg mb-6">A "Burn Boss" has to check the weather. Use the sliders to see if today is safe to burn!</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <!-- Sliders --><div class="space-y-6">
+                        <div>
+                            <label for="wind-slider" class="flex justify-between text-lg font-semibold">
+                                <span>Wind Speed</span>
+                                <span id="wind-value" class="text-blue-700 font-bold">Medium</span>
+                            </label>
+                            <input id="wind-slider" type="range" min="0" max="100" value="50" class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>Calm</span>
+                                <span>Medium</span>
+                                <span>Very Windy!</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="humidity-slider" class="flex justify-between text-lg font-semibold">
+                                <span>Humidity (Air Moisture)</span>
+                                <span id="humidity-value" class="text-blue-700 font-bold">Medium</span>
+                            </label>
+                            <input id="humidity-slider" type="range" min="0" max="100" value="50" class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>Very Dry</span>
+                                <span>Medium</span>
+                                <span>Very Damp</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="dryness-slider" class="flex justify-between text-lg font-semibold">
+                                <span>Plant Dryness</span>
+                                <span id="dryness-value" class="text-blue-700 font-bold">Medium</span>
+                            </label>
+                            <input id="dryness-slider" type="range" min="0" max="100" value="50" class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>Wet Plants</span>
+                                <span>Medium</span>
+                                <span>Very Dry Plants!</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Safety Meter --><div class="flex flex-col items-center justify-center">
+                        <div id="safety-meter" class="w-64 h-64 rounded-full flex items-center justify-center text-white text-center p-4 transition-all duration-300 ease-in-out shadow-xl">
+                            <div class="text-center">
+                                <div id="safety-icon" class="text-6xl mb-2"></div>
+                                <h3 id="safety-status" class="text-3xl font-bold"></h3>
+                                <p id="safety-message" class="text-lg font-medium mt-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Collector Button --><div class="text-center mt-12">
+                    <button id="open-data-collector-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all shadow-lg">
+                        <i data-lucide="clipboard-list" class="inline-block mr-2 -mt-1"></i>
+                        Open Data Collector
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 7: Celebration Certificate --><section id="step-7" class="lesson-step" style="display: none;">
+                <h2 class="text-3xl font-bold text-blue-800 mb-6 text-center">Step 7: You're a Prairie Expert!</h2>
+                
+                <p class="text-lg text-center mb-6">Type your name below to get your official certificate.</p>
+                
+                <div class="max-w-md mx-auto mb-8">
+                    <label for="student-name" class="block text-lg font-semibold text-gray-700 mb-2">Student's Name:</label>
+                    <input type="text" id="student-name" class="w-full text-2xl p-3 border-2 border-blue-300 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type name here...">
+                </div>
+
+                <!-- Certificate --><div id="certificate-section" class="bg-gray-50">
+                    <div id="certificate-wrapper" class="w-full max-w-4xl mx-auto border-8 border-blue-800 p-8 md:p-12 rounded-lg bg-white shadow-2xl text-center">
+                        <p class="text-2xl font-semibold text-gray-600">This certificate is awarded to</p>
+                        <h3 id="certificate-name" class="text-5xl md:text-6xl font-bold text-blue-900 my-8 min-h-[72px] p-2 border-b-4 border-gray-300">
+                            [Student Name]
+                        </h3>
+                        <p class="text-2xl font-semibold text-gray-600">for successfully completing the</p>
+                        <h1 class="text-4xl md:text-5xl font-bold text-blue-900 mt-4 mb-8">Good Fire vs. Bad Fire</h1>
+                        <p class="text-xl text-gray-700">and becoming an expert on prairie health and safety!</p>
+                        <div class="mt-12 flex justify-between items-center">
+                            <span class="text-lg text-gray-600">Date: <span id="certificate-date"></span></span>
+                            <span class="text-lg text-gray-600">Signature: <span class="font-bold text-xl italic text-gray-800">Ms. Prairie</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <button id="print-cert-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all shadow-lg">
+                        <i data-lucide="printer" class="inline-block mr-2 -mt-1"></i>
+                        Print Certificate
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Navigation Buttons --><footer class="flex justify-between items-center mt-8">
+            <button id="prev-btn" 
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full text-lg transition-all opacity-50 cursor-not-allowed" 
+                    disabled>
+                &larr; Previous
+            </button>
+            <span id="step-counter" class="text-lg font-semibold text-gray-600">Step 1 of 7</span>
+            <button id="next-btn" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full text-lg transition-all">
+                Next &rarr;
+            </button>
+        </footer>
+    </div>
+
+    <!-- Data Collector Modal --><div id="data-collector-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="display: none; z-index: 100;">
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col">
+            <!-- Modal Header --><div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-3xl font-bold text-blue-900">
+                    <i data-lucide="clipboard-list" class="inline-block mr-2 -mt-1"></i>
+                    Prairie Burn Data Collector
+                </h2>
+                <button id="close-data-collector-btn" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body --><div class="p-6 md:p-8 overflow-y-auto space-y-8">
+                
+                <!-- Section 1: Live Weather --><section class="p-6 bg-gray-100 rounded-lg">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Get Live Weather Data</h3>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <input type="text" id="city-input" placeholder="Enter city name (e.g., Chicago)" class="flex-grow p-3 border border-gray-300 rounded-lg shadow-inner">
+                        <button id="fetch-city-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                            Fetch by City
+                        </button>
+                        <button id="fetch-geo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                            Use My Location
+                        </button>
+                    </div>
+                    <div id="weather-loading" class="mt-4 text-blue-600" style="display: none;">Loading...</div>
+                    <div id="weather-error" class="mt-4 text-red-600" style="display: none;"></div>
+                    <div id="weather-results" class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4" style="display: none;">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-500">Temperature</div>
+                            <div id="weather-temp" class="text-2xl font-bold">--</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-500">Humidity</div>
+                            <div id="weather-humidity" class="text-2xl font-bold">--</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-500">Wind Speed</div>
+                            <div id="weather-wind" class="text-2xl font-bold">--</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-500">Wind Direction</div>
+                            <div id="weather-wind-dir" class="text-2xl font-bold">--</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Section 2: Manual Data Entry --><section>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Manual Data Log</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label for="log-temp" class="block text-sm font-medium text-gray-700">Temp (°F)</label>
+                            <input type="number" id="log-temp" class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-inner">
+                        </div>
+                        <div>
+                            <label for="log-humidity" class="block text-sm font-medium text-gray-700">Humidity (%)</label>
+                            <input type="number" id="log-humidity" class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-inner">
+                        </div>
+                        <div>
+                            <label for="log-wind" class="block text-sm font-medium text-gray-700">Wind (mph)</label>
+                            <input type="number" id="log-wind" class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-inner">
+                        </div>
+                        <div>
+                            <label for="log-dryness" class="block text-sm font-medium text-gray-700">Dryness (1-10)</label>
+                            <input type="number" id="log-dryness" min="1" max="10" class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-inner">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="log-notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                        <textarea id="log-notes" rows="2" class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-inner" placeholder="e.g., 'Wind from SW', 'Heavy dew'"></textarea>
+                    </div>
+                    <div class="text-right mt-4">
+                        <button id="add-log-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+                            Add Log Entry
+                        </button>
+                    </div>
+                </section>
+                
+                <!-- Section 3: Data Table --><section>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Logged Data</h3>
+                    <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Temp</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Humidity</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Wind</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dryness</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-log-table" class="bg-white divide-y divide-gray-200">
+                                <!-- Log entries will be added here --><tr id="no-data-row">
+                                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">No data logged yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-right mt-4">
+                        <button id="download-csv-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+                            Download as CSV
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+// Wait for the DOM to be fully loaded before running any script
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- GLOBAL STATE ---
+    let currentGradeBand = 'k-2';
+    let currentStep = 1;
+    const totalSteps = 7;
+    
+    // Quiz State
+    let quizData = {};
+    let currentQuestionIndex = 0;
+    let score = 0;
+    
+    // Sorting Game State
+    let sortableItems = [];
+    
+    // Data Log State
+    let dataLog = [];
+
+    // --- DATA ---
+    const K2_SORTING_ITEMS = [
+        { id: 1, text: "Clearing old, dead plants", type: "good" },
+        { id: 2, "text": "Someone playing with matches", type: "bad" },
+        { id: 3, "text": "Helping new seeds grow", type: "good" },
+        { id: 4, "text": "A campfire left alone", type: "bad" },
+        { id: 5, "text": "Making room for sunshine", type: "good" },
+        { id: 6, "text": "A very windy day", type: "bad" }
+    ];
+    
+    const K2_QUIZ = [
+        {
+            question: "What does a 'Good Fire' help grow?",
+            options: ["New green plants", "Big trees", "Rocks"],
+            answer: "New green plants"
+        },
+        {
+            question: "Who is in charge of a 'Good Fire'?",
+            options: ["Kids", "Trained firefighters", "Animals"],
+            answer: "Trained firefighters"
+        },
+        {
+            question: "What should you do if you see a fire?",
+            options: ["Run up to it", "Stay with your teacher", "Try to put it out"],
+            answer: "Stay with your teacher"
+        }
+    ];
+    
+    const S35_SORTING_ITEMS = [
+        { id: 1, text: "A planned 'prescribed burn'", type: "good" },
+        { id: 2, "text": "A tossed cigarette", type: "bad" },
+        { id: 3, "text": "Removing invasive (bad) plants", type: "good" },
+        { id: 4, "text": "Lightning strike in a dry forest", type: "bad" },
+        { id: 5, "text": "Returning nutrients to the soil", type: "good" },
+        { id: 6, "text": "Burning on a 'Red Flag' (high wind) day", type: "bad" },
+        { id: 7, "text": "Clearing fuel to prevent bigger fires", type: "good" },
+        { id: 8, "text": "Fireworks in a dry field", type: "bad" }
+    ];
+    
+    const S35_QUIZ = [
+        {
+            question: "What three things make up the 'Fire Triangle'?",
+            options: ["Wood, Water, Wind", "Heat, Fuel, Oxygen", "Soil, Sun, Seeds"],
+            answer: "Heat, Fuel, Oxygen"
+        },
+        {
+            question: "What is a 'firebreak'?",
+            options: ["A special water hose", "The person who starts the fire", "An area with no fuel to stop the fire"],
+            answer: "An area with no fuel to stop the fire"
+        },
+        {
+            question: "Who is the 'Burn Boss'?",
+            options: ["The person in charge of the plan", "The windiest day of the year", "A tool to light the fire"],
+            answer: "The person in charge of the plan"
+        },
+        {
+            question: "Why is high wind bad for a prescribed burn?",
+            options: ["It blows the smoke away", "It can make the fire jump the firebreak", "It makes the fire too cold"],
+            answer: "It can make the fire jump the firebreak"
+        }
+    ];
+
+    // --- INITIALIZATION ---
+    setGradeBand(currentGradeBand);
+    updateStepUI();
+    initSortingGame();
+    initQuiz();
+    updateSimulator();
+    document.getElementById('certificate-date').textContent = new Date().toLocaleDateString();
+    // Init lucide icons
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+    
+    // --- ADD ALL EVENT LISTENERS ---
+
+    // Navigation
+    document.getElementById('toggle-k2').addEventListener('click', () => setGradeBand('k-2'));
+    document.getElementById('toggle-35').addEventListener('click', () => setGradeBand('3-5'));
+    document.getElementById('prev-btn').addEventListener('click', () => changeStep('prev'));
+    document.getElementById('next-btn').addEventListener('click', () => changeStep('next'));
+
+    // Step 2: Visualizer
+    document.getElementById('v35-slider-input').addEventListener('input', (e) => updateSlider(e.target.value));
+    document.getElementById('before-upload').addEventListener('change', (e) => uploadImage(e, 'before'));
+    document.getElementById('after-upload').addEventListener('change', (e) => uploadImage(e, 'after'));
+
+    // Step 3: Sorting Game (Delegated)
+    document.getElementById('sorting-deck').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const card = e.target.closest('.sort-card');
+            const itemId = parseInt(card.dataset.id);
+            const chosenBin = e.target.dataset.bin;
+            sortCard(itemId, chosenBin);
+        }
+    });
+
+    // Step 4: Quiz
+    document.getElementById('restart-quiz-btn').addEventListener('click', restartQuiz);
+    document.getElementById('quiz-container').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            selectAnswer(e.target, e.target.dataset.option);
+        }
+    });
+    
+    // Step 6: Simulator
+    document.getElementById('wind-slider').addEventListener('input', updateSimulator);
+    document.getElementById('humidity-slider').addEventListener('input', updateSimulator);
+    document.getElementById('dryness-slider').addEventListener('input', updateSimulator);
+    document.getElementById('open-data-collector-btn').addEventListener('click', showDataCollector);
+
+    // Step 7: Certificate
+    document.getElementById('student-name').addEventListener('input', (e) => updateCertificateName(e.target.value));
+    document.getElementById('print-cert-btn').addEventListener('click', () => window.print());
+
+    // Data Collector Modal
+    document.getElementById('close-data-collector-btn').addEventListener('click', hideDataCollector);
+    document.getElementById('fetch-city-btn').addEventListener('click', fetchWeatherByCity);
+    document.getElementById('fetch-geo-btn').addEventListener('click', fetchWeatherByGeo);
+    document.getElementById('add-log-btn').addEventListener('click', addLogEntry);
+    document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
+
+
+    // --- GRADE BAND TOGGLE ---
+    function setGradeBand(band) {
+        currentGradeBand = band;
+        
+        // Update toggle buttons
+        const k2Btn = document.getElementById('toggle-k2');
+        const s35Btn = document.getElementById('toggle-35');
+        if (band === 'k-2') {
+            k2Btn.classList.add('bg-blue-600', 'text-white');
+            k2Btn.classList.remove('bg-white', 'text-gray-900');
+            s35Btn.classList.add('bg-white', 'text-gray-900');
+            s35Btn.classList.remove('bg-blue-600', 'text-white');
+        } else {
+            s35Btn.classList.add('bg-blue-600', 'text-white');
+            s35Btn.classList.remove('bg-white', 'text-gray-900');
+            k2Btn.classList.add('bg-white', 'text-gray-900');
+            k2Btn.classList.remove('bg-blue-600', 'text-white');
+        }
+        
+        // Toggle all content sections using data-grade attribute
+        // Reading from currentGradeBand (set above) instead of 'band' param just to be safe
+        document.querySelectorAll('.grade-content[data-grade]').forEach(el => {
+            if (el.dataset.grade === currentGradeBand) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+        
+        // Re-initialize dynamic content
+        initSortingGame();
+        initQuiz();
+    }
+
+    // --- STEP NAVIGATION ---
+    function changeStep(direction) {
+        if (direction === 'next' && currentStep < totalSteps) {
+            currentStep++;
+        } else if (direction === 'prev' && currentStep > 1) {
+            currentStep--;
+        }
+        updateStepUI();
+    }
+
+    function updateStepUI() {
+        // Hide all steps
+        document.querySelectorAll('.lesson-step').forEach(step => {
+            step.style.display = 'none';
+        });
+        
+        // Show current step
+        document.getElementById(`step-${currentStep}`).style.display = 'block';
+        
+        // Update step counter
+        document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
+        
+        // Update nav buttons
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        if (currentStep === 1) {
+            prevBtn.disabled = true;
+            prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            prevBtn.classList.remove('hover:bg-gray-400');
+        } else {
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            prevBtn.classList.add('hover:bg-gray-400');
+        }
+        
+        if (currentStep === totalSteps) {
+            nextBtn.textContent = 'Finish';
+            nextBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            nextBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        } else {
+            nextBtn.textContent = 'Next →';
+            nextBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+    }
+    
+    // --- STEP 2: VISUALIZER ---
+    function updateSlider(value) {
+        const percentage = `${value}%`;
+        document.querySelector('.slider-visualizer .after-image').style.clipPath = `polygon(0 0, ${percentage} 0, ${percentage} 100%, 0 100%)`;
+        document.querySelector('.slider-visualizer .slider-handle').style.left = percentage;
+    }
+    
+    function uploadImage(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageUrl = e.target.result;
+                if (type === 'before') {
+                    document.getElementById('k2-before-img').src = imageUrl;
+                    document.getElementById('v35-before-img').src = imageUrl;
+                } else if (type === 'after') {
+                    document.getElementById('k2-after-img').src = imageUrl;
+                    document.getElementById('v35-after-img').src = imageUrl;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // --- STEP 3: SORTING GAME ---
+    function initSortingGame() {
+        sortableItems = (currentGradeBand === 'k-2') ? [...K2_SORTING_ITEMS] : [...S35_SORTING_ITEMS];
+        
+        const deck = document.getElementById('sorting-deck');
+        const goodBin = document.getElementById('good-fire-bin');
+        const badBin = document.getElementById('bad-fire-bin');
+        
+        deck.innerHTML = '';
+        goodBin.innerHTML = '';
+        badBin.innerHTML = '';
+        
+        sortableItems.forEach(item => {
+            const card = document.createElement('div');
+            card.id = `card-${item.id}`;
+            card.dataset.id = item.id;
+            card.className = 'sort-card w-full md:w-auto bg-white p-4 rounded-lg shadow-md border border-gray-200';
+            card.innerHTML = `
+                <p class="text-base text-gray-800 mb-3">${item.text}</p>
+                <div class="flex justify-around">
+                    <button class="bg-green-200 text-green-800 hover:bg-green-300 font-semibold py-1 px-4 rounded-full text-sm" data-bin="good">Good ✅</button>
+                    <button class="bg-red-200 text-red-800 hover:bg-red-300 font-semibold py-1 px-4 rounded-full text-sm" data-bin="bad">Bad ⛔</button>
+                </div>
+            `;
+            deck.appendChild(card);
+        });
+    }
+
+    function sortCard(itemId, chosenBin) {
+        const item = sortableItems.find(i => i.id === itemId);
+        const card = document.getElementById(`card-${itemId}`);
+        
+        if (!item || !card || card.parentElement.id !== 'sorting-deck') return; // Already sorted
+
+        const correct = item.type === chosenBin;
+        const targetBin = (chosenBin === 'good') ? 
+            document.getElementById('good-fire-bin') : 
+            document.getElementById('bad-fire-bin');
+        
+        // Remove action buttons
+        card.querySelector('div').remove();
+        
+        // Add feedback
+        if (correct) {
+            card.classList.add('bg-green-100', 'border-green-400');
+        } else {
+            card.classList.add('bg-red-100', 'border-red-400');
+        }
+        
+        // Move card
+        targetBin.appendChild(card);
+    }
+    
+    // --- STEP 4: QUICK QUIZ ---
+    function initQuiz() {
+        quizData = (currentGradeBand === 'k-2') ? K2_QUIZ : S35_QUIZ;
+        currentQuestionIndex = 0;
+        score = 0;
+        document.getElementById('quiz-result').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        showQuestion();
+    }
+    
+    function restartQuiz() {
+        initQuiz();
+    }
+    
+    function showQuestion() {
+        if (currentQuestionIndex >= quizData.length) {
+            showQuizResult();
+            return;
+        }
+        
+        const q = quizData[currentQuestionIndex];
+        const quizContainer = document.getElementById('quiz-container');
+        
+        let optionsHtml = '';
+        q.options.forEach(option => {
+            optionsHtml += `<button class="w-full text-left text-lg p-4 bg-gray-100 hover:bg-blue-100 border border-gray-200 rounded-lg transition-all" data-option="${option}">
+                ${option}
+            </button>`;
+        });
+        
+        quizContainer.innerHTML = `
+            <h3 class="text-2xl font-semibold mb-6">${currentQuestionIndex + 1}. ${q.question}</h3>
+            <div class="space-y-3">
+                ${optionsHtml}
+            </div>
+            <div id="quiz-feedback" class="mt-6"></div>
+        `;
+    }
+    
+    function selectAnswer(buttonEl, selectedOption) {
+        const q = quizData[currentQuestionIndex];
+        const feedbackEl = document.getElementById('quiz-feedback');
+        
+        // Disable all buttons
+        document.querySelectorAll('#quiz-container button').forEach(btn => btn.disabled = true);
+        
+        if (selectedOption === q.answer) {
+            score++;
+            buttonEl.classList.add('bg-green-200', 'border-green-400', 'font-bold');
+            feedbackEl.innerHTML = `<p class="text-green-700 text-xl font-semibold">Correct! 🎉</p>`;
+        } else {
+            buttonEl.classList.add('bg-red-200', 'border-red-400', 'font-bold');
+            feedbackEl.innerHTML = `<p class="text-red-700 text-xl font-semibold">Not quite. The correct answer was: ${q.answer}</p>`;
+            // Highlight correct answer
+            document.querySelectorAll('#quiz-container button').forEach(btn => {
+                if (btn.dataset.option === q.answer) {
+                    btn.classList.add('bg-green-200', 'border-green-400');
+                }
+            });
+        }
+        
+        // Go to next question after a delay
+        setTimeout(() => {
+            currentQuestionIndex++;
+            showQuestion();
+        }, 2000);
+    }
+    
+    function showQuizResult() {
+        document.getElementById('quiz-container').style.display = 'none';
+        document.getElementById('quiz-result').style.display = 'block';
+        document.getElementById('quiz-score').textContent = score;
+        document.getElementById('quiz-total').textContent = quizData.length;
+    }
+    
+    // --- STEP 6: SIMULATOR ---
+    function updateSimulator() {
+        const wind = parseInt(document.getElementById('wind-slider').value);
+        const humidity = parseInt(document.getElementById('humidity-slider').value);
+        const dryness = parseInt(document.getElementById('dryness-slider').value);
+
+        // Update value labels
+        document.getElementById('wind-value').textContent = getSliderLabel(wind);
+        document.getElementById('humidity-value').textContent = getSliderLabel(humidity, true);
+        document.getElementById('dryness-value').textContent = getSliderLabel(dryness);
+
+        // Simple safety score calculation
+        // High wind is bad (high value)
+        // High humidity is good (lowers score)
+        // High dryness is bad (high value)
+        // Perfect score is 0, worst is 200 (wind 100 + dryness 100 - humidity 0)
+        let safetyScore = wind + dryness - humidity;
+
+        const meter = document.getElementById('safety-meter');
+        const status = document.getElementById('safety-status');
+        const message = document.getElementById('safety-message');
+        const icon = document.getElementById('safety-icon');
+        
+        // Clear old classes
+        meter.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500');
+
+        if (safetyScore < 40) {
+            // SAFE
+            meter.classList.add('bg-green-500');
+            status.textContent = "SAFE";
+            message.textContent = "Conditions are good. It's safe to burn!";
+            icon.innerHTML = '✅';
+        } else if (safetyScore < 100) {
+            // CAUTION
+            meter.classList.add('bg-yellow-500');
+            status.textContent = "CAUTION";
+            message.textContent = "It's a bit risky. Proceed with caution.";
+            icon.innerHTML = '⚠️';
+        } else {
+            // DANGER
+            meter.classList.add('bg-red-500');
+            status.textContent = "DANGER";
+            message.textContent = "NOT SAFE! Conditions are too dangerous.";
+            icon.innerHTML = '⛔';
+        }
+    }
+
+    function getSliderLabel(value, isHumidity = false) {
+        let low, high;
+        if(isHumidity) { // Humidity is inverted
+            low = "Very Damp"; high = "Very Dry";
+        } else {
+            low = "Low"; high = "High";
+        }
+        
+        if (value < 33) return low;
+        if (value < 66) return "Medium";
+        return high;
+    }
+
+    // --- STEP 7: CERTIFICATE ---
+    function updateCertificateName(name) {
+        const certName = document.getElementById('certificate-name');
+        if (name.trim() === '') {
+            certName.textContent = '[Student Name]';
+            certName.classList.add('text-gray-400');
+        } else {
+            certName.textContent = name;
+            certName.classList.remove('text-gray-400');
+        }
+    }
+    
+    // --- DATA COLLECTOR MODAL ---
+    function showDataCollector() {
+        document.getElementById('data-collector-modal').style.display = 'flex';
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    }
+
+    function hideDataCollector() {
+        document.getElementById('data-collector-modal').style.display = 'none';
+    }
+    
+    function fetchWeatherByCity() {
+        const city = document.getElementById('city-input').value;
+        if (!city) {
+            showWeatherError("Please enter a city name.");
+            return;
+        }
+        // Geocoding first to get lat/lon
+        showWeatherLoading(true);
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    const { latitude, longitude, name } = data.results[0];
+                    getWeatherData(latitude, longitude, name);
+                } else {
+                    showWeatherError(`Could not find city: ${city}`);
+                }
+            })
+            .catch(err => {
+                showWeatherError("Failed to fetch location data.");
+            });
+    }
+    
+    function fetchWeatherByGeo() {
+        if (!navigator.geolocation) {
+            showWeatherError("Geolocation is not supported by your browser.");
+            return;
+        }
+        showWeatherLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                getWeatherData(position.coords.latitude, position.coords.longitude, "Your Location");
+            },
+            () => {
+                showWeatherError("Unable to retrieve your location. Please allow location access.");
+            }
+        );
+    }
+    
+    function getWeatherData(lat, lon, name) {
+        const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.current) {
+                    showWeatherLoading(false);
+                    const current = data.current;
+                    document.getElementById('weather-results').style.display = 'grid';
+                    document.getElementById('weather-error').style.display = 'none';
+                    
+                    document.getElementById('weather-temp').textContent = `${Math.round(current.temperature_2m)}°F`;
+                    document.getElementById('weather-humidity').textContent = `${current.relative_humidity_2m}%`;
+                    document.getElementById('weather-wind').textContent = `${Math.round(current.wind_speed_10m)} mph`;
+                    document.getElementById('weather-wind-dir').textContent = getWindDirection(current.wind_direction_10m);
+
+                    // Pre-fill log inputs
+                    document.getElementById('log-temp').value = Math.round(current.temperature_2m);
+                    document.getElementById('log-humidity').value = current.relative_humidity_2m;
+                    document.getElementById('log-wind').value = Math.round(current.wind_speed_10m);
+                    document.getElementById('log-notes').value = `Live data from ${name}`;
+                } else {
+                    showWeatherError("Could not retrieve weather data.");
+                }
+            })
+            .catch(err => {
+                showWeatherError("Failed to fetch weather data.");
+            });
+    }
+
+    function showWeatherLoading(isLoading) {
+        document.getElementById('weather-loading').style.display = isLoading ? 'block' : 'none';
+        if (isLoading) {
+            document.getElementById('weather-error').style.display = 'none';
+            document.getElementById('weather-results').style.display = 'none';
+        }
+    }
+
+    function showWeatherError(message) {
+        showWeatherLoading(false);
+        const errorEl = document.getElementById('weather-error');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+    }
+    
+    function getWindDirection(degrees) {
+        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const index = Math.round(degrees / 22.5) % 16;
+        return directions[index];
+    }
+    
+    // --- DATA LOG TABLE ---
+    function addLogEntry() {
+        const entry = {
+            time: new Date().toLocaleTimeString(),
+            temp: document.getElementById('log-temp').value || '--',
+            humidity: document.getElementById('log-humidity').value || '--',
+            wind: document.getElementById('log-wind').value || '--',
+            dryness: document.getElementById('log-dryness').value || '--',
+            notes: document.getElementById('log-notes').value || ''
+        };
+        dataLog.push(entry);
+        renderLogTable();
+        
+        // Clear inputs
+        document.getElementById('log-temp').value = '';
+        document.getElementById('log-humidity').value = '';
+        document.getElementById('log-wind').value = '';
+        document.getElementById('log-dryness').value = '';
+        document.getElementById('log-notes').value = '';
+    }
+
+    function renderLogTable() {
+        const tableBody = document.getElementById('data-log-table');
+        tableBody.innerHTML = ''; // Clear existing
+        
+        if (dataLog.length === 0) {
+            tableBody.innerHTML = `<tr id="no-data-row"><td colspan="6" class="px-4 py-4 text-center text-gray-500">No data logged yet.</td></tr>`;
+            return;
+        }
+        
+        dataLog.forEach(entry => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.time}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.temp}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.humidity}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.wind}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.dryness}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${entry.notes}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    function downloadCSV() {
+        if (dataLog.length === 0) {
+            alert("No data to download!");
+            return;
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        const headers = ["Time", "Temperature", "Humidity", "Wind_Speed", "Dryness_Rating", "Notes"];
+        csvContent += headers.join(",") + "\n";
+        
+        dataLog.forEach(entry => {
+            const row = [entry.time, entry.temp, entry.humidity, entry.wind, entry.dryness, `"${entry.notes}"`];
+            csvContent += row.join(",") + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "prairie_burn_data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+}); // End of DOMContentLoaded
+</script>
+</body>
+</html>
+
