@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Prairie Burn — Data Collector</title>
+    <style>
+      body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;padding:16px;background:#f8fafc;color:#111}
+      h1{margin:0 0 8px;font-size:20px}
+      .small{color:#555;font-size:12px;margin-bottom:12px}
+      .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8;margin-bottom:8}
+      input,button,textarea{padding:8px;border:1px solid #ddd;border-radius:10px}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}
+      .btn{background:#111827;color:#fff;border:1px solid #111827;border-radius:10px;padding:8px 12px;cursor:pointer}
+      .ghost{background:#fff;color:#111;border:1px solid #ddd}
+    </style>
+  </head>
+  <body>
+    <h1>Prairie Burn — Data Collector</h1>
+    <div class="small">Log class readings for <strong>wind</strong>, <strong>humidity</strong>, and <strong>dryness</strong>. Add optional temperature & notes, then download a CSV.</div>
+
+    <div class="row">
+      <label>Wind (mph)<input id="wind" type="number" /></label>
+      <label>Humidity (%)<input id="humidity" type="number" /></label>
+      <label>Dryness (0–100)<input id="dryness" type="number" /></label>
+      <label>Temperature (°F)<input id="temp" type="number" placeholder="optional" /></label>
+    </div>
+
+    <div class="row">
+      <input id="place" placeholder="City or school (e.g., Ann Arbor)" />
+      <button class="btn" id="fetchPlace">Fetch Real‑Time</button>
+      <button class="btn ghost" id="fetchGeo">Use My Location</button>
+    </div>
+
+    <label>Notes<textarea id="notes" rows="2" placeholder="Crew, sky, smoke direction, etc."></textarea></label>
+    <div style="display:flex;gap:8;margin-top:8">
+      <button class="btn" id="add">Add Data Point</button>
+      <button class="btn ghost" id="download">Download CSV</button>
+      <button class="btn ghost" id="clear">Clear Table</button>
+    </div>
+
+    <table id="tbl"><thead><tr><th>Timestamp</th><th>Wind (mph)</th><th>Humidity (%)</th><th>Dryness</th><th>Temp (°F)</th><th>Notes</th></tr></thead><tbody></tbody></table>
+
+    <script>
+      (function(){
+        var sp = new URLSearchParams(location.search);
+        var wind = sp.get('wind'); var humidity = sp.get('humidity'); var dryness = sp.get('dryness');
+        if (wind) document.getElementById('wind').value = wind;
+        if (humidity) document.getElementById('humidity').value = humidity;
+        if (dryness) document.getElementById('dryness').value = dryness;
+
+        var tbody = document.querySelector('#tbl tbody');
+        function addRow() {
+          var now = new Date().toLocaleString();
+          var w = (document.getElementById('wind').value||'').trim();
+          var h = (document.getElementById('humidity').value||'').trim();
+          var d = (document.getElementById('dryness').value||'').trim();
+          var t = (document.getElementById('temp').value||'').trim();
+          var n = (document.getElementById('notes').value||'').trim();
+          var tr = document.createElement('tr');
+          [now,w,h,d,t,n].forEach(function(v){ var td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+          tbody.appendChild(tr);
+          document.getElementById('notes').value='';
+        }
+        function toCSV() {
+          var rows = [['Timestamp','Wind (mph)','Humidity (%)','Dryness','Temp (°F)','Notes']];
+          Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+            rows.push(Array.from(tr.children).map(function(td){ return '"' + ((td.textContent||'').replaceAll('"','""')) + '"'; }));
+          });
+          var csv = rows.map(function(r){ return Array.isArray(r) ? r.join(',') : r; }).join('\n');
+          var a = document.createElement('a');
+          a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+          a.download = 'prairie-burn-data.csv';
+          a.click();
+        }
+        function clearTable(){ tbody.innerHTML=''; }
+        document.getElementById('add').addEventListener('click', addRow);
+        document.getElementById('download').addEventListener('click', toCSV);
+        document.getElementById('clear').addEventListener('click', clearTable);
+
+        function drynessFromHumidity(h){ h = Number(h); if (!isFinite(h)) return ''; var d = Math.max(0, Math.min(100, 100 - Math.round(h))); return String(d); }
+        function applyLive(h, w, t){
+          if (isFinite(h)) document.getElementById('humidity').value = String(Math.round(h));
+          if (isFinite(w)) document.getElementById('wind').value = String(Math.round(w));
+          if (isFinite(t)) document.getElementById('temp').value = String(Math.round(t));
+          if (isFinite(h)) document.getElementById('dryness').value = drynessFromHumidity(h);
+        }
+        function fetchFromCoords(lat, lon){
+          var url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,relative_humidity_2m,wind_speed_10m';
+          fetch(url).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(function(data){
+            var cur = (data && data.current) || {};
+            applyLive(cur.relative_humidity_2m, cur.wind_speed_10m, cur.temperature_2m);
+          }).catch(function(e){ alert('Could not fetch live data: '+ e.message); });
+        }
+        function fetchFromPlace(name){
+          var gurl = 'https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(name)+'&count=1&language=en&format=json';
+          fetch(gurl).then(function(r){ if(!r.ok) throw new Error('Geo HTTP '+r.status); return r.json(); }).then(function(g){
+            if(!g || !g.results || !g.results[0]) throw new Error('Place not found');
+            var lat = g.results[0].latitude; var lon = g.results[0].longitude; fetchFromCoords(lat, lon);
+          }).catch(function(e){ alert('Could not locate that place: '+ e.message); });
+        }
+        document.getElementById('fetchPlace').addEventListener('click', function(){
+          var name = (document.getElementById('place').value||'').trim(); if(!name) return; fetchFromPlace(name);
+        });
+        document.getElementById('fetchGeo').addEventListener('click', function(){
+          if(!navigator.geolocation){ alert('Geolocation not available'); return; }
+          navigator.geolocation.getCurrentPosition(function(pos){ fetchFromCoords(pos.coords.latitude, pos.coords.longitude); }, function(err){ alert('Location error: '+ err.message); }, {enableHighAccuracy:true, timeout:8000});
+        });
+      })();
+    </script>
+  </body>
+</html>
