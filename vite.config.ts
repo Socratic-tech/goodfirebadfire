@@ -3,6 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // must match your repo name for Project Pages
-  base: '/goodfirebadfire/',
+  // Relative asset paths so it works under /goodfirebadfire/ automatically
+  base: './',
 })
