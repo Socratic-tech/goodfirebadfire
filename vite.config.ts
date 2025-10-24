@@ -3,6 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // Relative asset paths so it works under /goodfirebadfire/ automatically
+  // Use relative paths so it works under /goodfirebadfire/
   base: './',
 })
