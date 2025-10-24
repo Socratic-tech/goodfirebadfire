@@ -23,8 +23,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      # If you DON'T have a package-lock.json, replace 'npm ci' with 'npm i'
       - run: npm ci
+      # Tip: if type-checks are failing, set "build": "vite build" in package.json
       - run: npm run build
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
